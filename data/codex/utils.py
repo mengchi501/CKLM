@@ -88,7 +88,6 @@ class GraphDataset:
         num_snapshots : Number of snapshots to be constructed
         '''
         sample_triples = copy.deepcopy(self.unique_triples)
-        seen_triples = set()
         accumulated_triples_cnt = []
         
         snapshot_entities = [set()]
@@ -105,7 +104,6 @@ class GraphDataset:
                     snapshot_entities[0].add(h)
                     snapshot_entities[0].add(t)
                     snapshot_relations[0].add(r)
-                    seen_triples.add(seed_triple)
                     snapshot_triples[0].add(seed_triple)
             while len(sample_triples) > 0:
                 if element == 'entity' and len(snapshot_entities[i]) >= len(self.unique_entities) * (i + 1) / num_snapshots:
@@ -122,11 +120,17 @@ class GraphDataset:
                 snapshot_entities[i].add(t)
                 snapshot_relations[i].add(r)
                 snapshot_triples[i].add(sample_triple)
-                seen_triples.add(sample_triple)
                 sample_triples.remove(sample_triple)
             if i == num_snapshots - 1:
                 # add remaining triples to the last snapshot
                 snapshot_triples[-1].update(sample_triples)
+            else:
+                # add all triples containing seen entities & relations to the current snapshot
+                for sample_triple in sample_triples:
+                    h, r, t = sample_triple
+                    if h in snapshot_entities[i] and t in snapshot_entities[i] and r in snapshot_relations[i]:
+                        snapshot_triples[i].add(sample_triple)
+                        sample_triples.remove(sample_triple)
             print(f'Snapshot {i}: {len(snapshot_entities[i])} entities, {len(snapshot_relations[i])} relations, {len(snapshot_triples[i])} triples')
 
             file_path = os.path.join(os.path.abspath(''), 'triples', f'codex-{self.dataset_size}', f'{element.upper()}_snapshot_{i}.txt')
