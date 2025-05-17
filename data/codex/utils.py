@@ -124,13 +124,14 @@ class GraphDataset:
             if i == num_snapshots - 1:
                 # add remaining triples to the last snapshot
                 snapshot_triples[-1].update(sample_triples)
-            else:
+            elif element is not 'fact':
                 # add all triples containing seen entities & relations to the current snapshot
-                for sample_triple in sample_triples:
-                    h, r, t = sample_triple
+                temp = list(sample_triples)
+                for j in range(len(temp)):
+                    h, r, t = temp[j]
                     if h in snapshot_entities[i] and t in snapshot_entities[i] and r in snapshot_relations[i]:
-                        snapshot_triples[i].add(sample_triple)
-                        sample_triples.remove(sample_triple)
+                        snapshot_triples[i].add(temp[j])
+                        sample_triples.remove(temp[j])
             print(f'Snapshot {i}: {len(snapshot_entities[i])} entities, {len(snapshot_relations[i])} relations, {len(snapshot_triples[i])} triples')
 
             file_path = os.path.join(os.path.abspath(''), 'triples', f'codex-{self.dataset_size}', f'{element.upper()}_snapshot_{i}.txt')
